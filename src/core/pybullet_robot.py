@@ -19,7 +19,7 @@ import pybullet as p
 from ..utils import *
 
 JOINT_SAFETY_FACTOR = 0.95
-
+DEFAULT_CONTROLLER_IDX = 1
 
 def get_subdirectories(path):
     return [os.path.basename(f.path) for f in os.scandir(path) if f.is_dir()]
@@ -276,6 +276,8 @@ class PybulletRobot:
         self._jointforce_flag = [0 for _ in range(self.numJoints)]
         self._collision_flag = [0 for _ in range(self.numBodies)]
 
+        self._controller_idx = DEFAULT_CONTROLLER_IDX
+
         # Get joint constraints
         for idx in range(self.numJoints):
             jointInfo = p.getJointInfo(bodyUniqueId=self.robotId, jointIndex=self.RobotMovableJointIdx[idx],
@@ -320,10 +322,51 @@ class PybulletRobot:
         p.resetBasePositionAndOrientation(bodyUniqueId=self._endID, posObj=self._p[0:3, 0],
                                           ornObj=Rot2quat(self._T_end[0:3, 0:3]), physicsClientId=self.ClientId)
 
+    def change_controller(self, controller_name:str):
+        available_controller = {
+            'gravity_compensation':0,
+            'joint_compliance_control':1,
+            'joint_inverse_dynamics_control':2,
+            'passivity_inverse_dynamics_control':3
+        }
+        if controller_name in available_controller.keys():
+            self._controller_idx = available_controller[controller_name]
+
     def _compute_torque_input(self):
 
         # You need to implement robot controllers here!
-        if True:
+        if self._controller_idx == 0:
+            Kp = 500
+            Kd = 20
+
+            qddot = self._qddot_des + Kp * (self._q_des - self._q) + Kd * (self._qdot_des - self._qdot)
+
+            tau = self._M @ qddot + self._c + self._g
+
+            self._tau = tau
+
+
+        elif self._controller_idx == 1:
+            Kp = 500
+            Kd = 20
+
+            qddot = self._qddot_des + Kp * (self._q_des - self._q) + Kd * (self._qdot_des - self._qdot)
+
+            tau = self._M @ qddot + self._c + self._g
+
+            self._tau = tau
+
+        elif self._controller_idx == 2:
+            Kp = 500
+            Kd = 20
+
+            qddot = self._qddot_des + Kp * (self._q_des - self._q) + Kd * (self._qdot_des - self._qdot)
+
+            tau = self._M @ qddot + self._c + self._g
+
+            self._tau = tau
+
+        elif self._controller_idx == 3:
             Kp = 500
             Kd = 20
 
