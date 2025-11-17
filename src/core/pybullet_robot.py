@@ -145,6 +145,7 @@ class PybulletRobot:
         self.RobotBaseJointIdx = self._robot_configs[self.robot_name]["JointInfo"]["RobotBaseJoint"]
         self.RobotMovableJointIdx = self._robot_configs[self.robot_name]["JointInfo"]["RobotMovableJoint"]
         self.RobotEEJointIdx = self._robot_configs[self.robot_name]["JointInfo"]["RobotEEJoint"]
+        self.RobotFTJointIdx = self._robot_configs[self.robot_name]["JointInfo"]["RobotFTJoint"]
 
         if len(self.RobotBaseJointIdx) == 0:
             self.RobotBaseJointIdx = [-1]
@@ -168,6 +169,9 @@ class PybulletRobot:
         # set robot's number of bodies and number of joints
         self._numBodies = 1 + p.getNumJoints(self.robotId, self.ClientId)
         self._numJoints = len(self.RobotMovableJointIdx)
+
+        for idx in self.RobotFTJointIdx:
+            p.enableJointForceTorqueSensor(self.robotId, jointIndex=idx, physicsClientId=self.ClientId)
 
         # Unlock joint limit
         if self._is_joint_limit is False:
@@ -265,6 +269,8 @@ class PybulletRobot:
         self._p = np.zeros([6, 1])       # End-effector's pose (xyz, xi)
         self._T_end = np.zeros([4, 4])   # End-effector's pose in SE3
 
+        self._ft = np.zeros([6, 1])  # F/T value
+
         # Constraint & flag
         self._jointpos_lower = [0 for _ in range(self.numJoints)]
         self._jointpos_upper = [0 for _ in range(self.numJoints)]
@@ -295,6 +301,11 @@ class PybulletRobot:
             self._qdot[i, 0] = states[1]  # qdot
             self._qddot[i, 0] = 0         # TODO
 
+        for idx in self.RobotFTJointIdx:
+            states = p.getJointState(self.robotId, idx, physicsClientId=self.ClientId)
+            for i in range(6):
+                self._ft[i, 0] = -states[2][i]  # j
+
         self._T_end = self.pinModel.FK(self._q)
 
         self._Js = self.pinModel.Js(self._q)
@@ -324,8 +335,8 @@ class PybulletRobot:
 
         # You need to implement robot controllers here!
         if True:
-            Kp = 500
-            Kd = 20
+            Kp = 5000
+            Kd = 80
 
             qddot = self._qddot_des + Kp * (self._q_des - self._q) + Kd * (self._qdot_des - self._qdot)
 
@@ -397,6 +408,14 @@ class PybulletRobot:
         :rtype: np.ndarray (n-by-1)
         """
         return self._tau.copy()
+
+    @property
+    def ft(self):
+        """
+        :return: F/T-sensor value
+        :rtype: np.ndarray (6-by-1)
+        """
+        return self._ft.copy()
 
     @property
     def Js(self):

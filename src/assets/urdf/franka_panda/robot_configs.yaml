@@ -21,7 +21,7 @@ franka_panda_handle:
         RobotBaseJoint: []
         RobotMovableJoint: [0, 1, 2, 3, 4, 5, 6]
         RobotEEJoint: [11]
-        RobotFTJoint: [7]
+        RobotFTJoint: [9]
         GripperJoint: []
 
 franka_panda_gripper:

@@ -3,6 +3,7 @@ scipy
 matplotlib
 jupyter
 pybullet==3.2.5
+urdf-parser-py
 
 neuromeka
 

@@ -86,6 +86,22 @@ def Adjoint(T):
     
     return Adj
 
+def AdjointInv(T):
+    """
+    Return the Adjoint transformation matrix Adj of transformation matrix T
+
+    :param T: Transformation matrix T
+    :return: Adjoint transformation matrix Adj
+    """
+    R = T[0:3, 0:3]
+    p = T[0:3, [3]]
+    p_ceil = VecToso3(p)
+
+    top = np.concatenate([R.T, -R.T @ p_ceil], axis=1)
+    btm = np.concatenate([np.zeros([3, 3]), R.T], axis=1)
+
+    return np.concatenate([top, btm], axis=0)
+
 def ad(V):
     pass
 
